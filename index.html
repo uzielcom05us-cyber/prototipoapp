@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedeLuz — Protótipo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@600;700;800&display=swap');
+
+  :root{
+    --bg: #0c0c0d;
+    --panel: #151517;
+    --panel-2: #1b1b1e;
+    --red: #c4202f;
+    --red-deep: #8f1622;
+    --amber: #f5a623;
+    --amber-soft: #f5a62333;
+    --text: #f4f1ea;
+    --text-dim: #9a9a9e;
+    --line: #2a2a2d;
+    --good: #3fae6b;
+    --good-soft: #3fae6b22;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(circle at 15% 0%, #2a140d 0%, var(--bg) 45%) fixed;
+    color: var(--text);
+    font-family:'Manrope', sans-serif;
+    min-height:100vh;
+    padding: 48px 24px 80px;
+    display:flex;
+    justify-content:center;
+  }
+
+  /* Phone frame */
+  .phone-shell{
+    position:relative;
+    width:320px;
+    height:680px;
+    border-radius:42px;
+    background: linear-gradient(160deg, #2b2b2e, #161617);
+    padding:12px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,.7), inset 0 0 0 1px #383838;
+  }
+  .phone-notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    width:120px; height:22px; background:#0c0c0d; border-radius:0 0 16px 16px;
+    z-index:30;
+  }
+  .phone-screen{
+    width:100%; height:100%;
+    border-radius:32px;
+    overflow:hidden;
+    position:relative;
+    background: var(--bg);
+    display:flex;
+    flex-direction:column;
+  }
+
+  .screen-statusbar{
+    height:34px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px;
+    font-size:12px; font-weight:700; color:var(--text);
+    flex-shrink:0;
+    z-index:20;
+    position:relative;
+  }
+  .screen-statusbar .icons{display:flex; gap:5px; align-items:center; color:var(--text-dim);}
+
+  .screen-body{
+    flex:1;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .view{
+    position:absolute; inset:0;
+    opacity:0; pointer-events:none;
+    transform: translateY(6px);
+    transition: opacity .2s ease, transform .2s ease;
+    overflow-y:auto;
+    -ms-overflow-style:none; scrollbar-width:none;
+  }
+  .view::-webkit-scrollbar{display:none;}
+  .view.active{ opacity:1; pointer-events:auto; transform:translateY(0); }
+
+  /* Bottom tab bar */
+  .tabbar{
+    height:62px; flex-shrink:0;
+    display:flex; align-items:stretch;
+    border-top:1px solid var(--line);
+    background: var(--panel);
+    z-index:20;
+  }
+  .tab-wrap{position:relative; flex:1; display:flex;}
+  .tab{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    color:var(--text-dim);
+    font-size:10px; font-weight:700;
+    cursor:pointer;
+    border:none; background:transparent;
+    transition: color .15s ease;
+  }
+  .tab svg{width:18px;height:18px;}
+  .tab.active{ color:var(--amber); }
+  .tab .badge{
+    position:absolute; top:6px; right:calc(50% - 16px);
+    width:7px;height:7px;border-radius:50%; background:var(--red);
+  }
+
+  .topbar{
+    padding: 6px 20px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .topbar .loc{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim);}
+  .topbar .loc .dot{width:6px;height:6px;border-radius:50%; background:var(--good); box-shadow:0 0 0 3px rgba(63,174,107,.2); flex-shrink:0;}
+  .topbar .bell, .topbar .back{
+    width:30px;height:30px;border-radius:50%;
+    background:var(--panel); border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0; cursor:pointer; position:relative;
+  }
+  .topbar .dot-alert{
+    position:absolute; top:5px; right:6px; width:6px;height:6px;border-radius:50%; background:var(--red);
+  }
+  .back-row{ display:flex; align-items:center; padding:8px 16px 4px; }
+  .back-row .back{ }
+  .back-row .back-title{ margin-left:10px; font-family:'Sora',sans-serif; font-weight:700; font-size:15px; }
+
+  .card{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:16px;
+  }
+
+  .btn-primary{
+    background: var(--red);
+    color:#fff;
+    border:none;
+    border-radius:16px;
+    padding:15px;
+    font-family:'Sora', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%;
+    box-shadow: 0 10px 24px -8px var(--red);
+    cursor:pointer;
+    transition: transform .12s ease;
+  }
+  .btn-primary:active{ transform: scale(.97); }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; }
+
+  .btn-amber{ background: var(--amber); color:#1a1100; box-shadow: 0 10px 24px -8px var(--amber); }
+  .btn-outline{
+    background:transparent; border:1.5px solid var(--red); color:var(--red);
+    border-radius:16px; padding:14px; width:100%; font-weight:700; font-size:13px;
+    text-align:center; cursor:pointer; font-family:'Sora',sans-serif;
+  }
+  .btn-ghost{
+    background:transparent; border:1px solid var(--line); color:var(--text-dim);
+    border-radius:16px; padding:14px; width:100%; font-weight:600; font-size:13px;
+    text-align:center; cursor:pointer;
+  }
+  .btn-ghost:hover{ border-color:#3a3a3e; color:var(--text); }
+  .btn-small{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:9px 12px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  .field{ margin-bottom:14px; }
+  .field label{
+    display:block; font-size:11px; font-weight:700; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;
+  }
+  .field .input-wrap{ position:relative; }
+  .field select, .field textarea, .field input{
+    width:100%; background: var(--panel-2); border:1px solid var(--line);
+    border-radius:12px; padding:11px 12px; color:var(--text);
+    font-family:'Manrope', sans-serif; font-size:13px; outline:none;
+  }
+  .field select:focus, .field textarea:focus, .field input:focus{ border-color: var(--amber); }
+  .field textarea{ resize:none; min-height:60px; }
+  .field .eye{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    color:var(--text-dim); cursor:pointer;
+  }
+
+  .checkbox-row{ display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--text-dim); margin:10px 0 16px; line-height:1.5; }
+  .checkbox-row input{ margin-top:2px; accent-color: var(--amber); flex-shrink:0; }
+  .checkbox-row a{ color: var(--amber); text-decoration:none; }
+
+  .divider-row{ display:flex; align-items:center; gap:10px; margin:16px 0; }
+  .divider-row .line{ flex:1; height:1px; background:var(--line); }
+  .divider-row span{ font-size:11px; color:var(--text-dim); }
+
+  .social-row{ display:flex; gap:10px; }
+  .social-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:12px;
+    padding:11px; font-size:12px; font-weight:700; cursor:pointer; color:var(--text);
+  }
+
+  .status-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    background: rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.35); color:var(--amber);
+    font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .status-pill.red{ background:rgba(196,32,47,.12); border-color:rgba(196,32,47,.35); color:#ff8a93; }
+  .status-pill.green{ background:var(--good-soft); border-color:rgba(63,174,107,.4); color:var(--good); }
+  .status-pill.gray{ background:rgba(255,255,255,.05); border-color:var(--line); color:var(--text-dim); }
+
+  .avatar-stack{ display:flex; }
+  .avatar-stack span{
+    width:24px;height:24px;border-radius:50%;
+    background:linear-gradient(135deg, var(--amber), var(--red));
+    border:2px solid var(--panel); margin-left:-8px;
+    font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#1a1100;
+  }
+  .avatar-stack span:first-child{margin-left:0;}
+
+  .progress-track{ height:8px; border-radius:8px; background:var(--line); overflow:hidden; }
+  .progress-fill{ height:100%; background: linear-gradient(90deg, var(--amber), var(--red)); border-radius:8px; transition: width .5s ease; }
+
+  .h-title{ font-family:'Sora', sans-serif; font-weight:700; font-size:18px; }
+  .h-sub{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+
+  .list-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 0; border-bottom:1px solid var(--line); gap:10px;
+  }
+  .list-row:last-child{ border-bottom:none; }
+  .list-row .label{ font-size:13px; font-weight:600; }
+  .list-row .value{ font-size:12px; color:var(--text-dim); flex-shrink:0; }
+
+  .zone-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 14px; border-radius:14px; background:var(--panel-2);
+    border:1px solid var(--line); margin-bottom:8px;
+  }
+  .zone-row .left{ display:flex; align-items:center; gap:10px; }
+  .zone-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .zone-dot.ok{ background:var(--good); box-shadow:0 0 0 3px rgba(63,174,107,.18); }
+  .zone-dot.warn{ background:var(--amber); box-shadow:0 0 0 3px rgba(245,166,35,.18); }
+  .zone-dot.down{ background:var(--red); box-shadow:0 0 0 3px rgba(196,32,47,.18); animation:pulse-soft 1.8s infinite; }
+  @keyframes pulse-soft{ 0%{box-shadow:0 0 0 3px rgba(196,32,47,.18);} 50%{box-shadow:0 0 0 6px rgba(196,32,47,.05);} 100%{box-shadow:0 0 0 3px rgba(196,32,47,.18);} }
+  .zone-name{ font-size:13px; font-weight:700; }
+  .zone-meta{ font-size:11px; color:var(--text-dim); }
+  .zone-status{ font-size:11px; font-weight:700; }
+  .zone-status.ok{ color:var(--good); }
+  .zone-status.warn{ color:var(--amber); }
+  .zone-status.down{ color:#ff8a93; }
+
+  .protocol-box{
+    background: linear-gradient(135deg, #1c1308, #15110c);
+    border:1px dashed var(--amber); border-radius:14px; padding:14px 16px; text-align:center;
+  }
+  .protocol-box .code{
+    font-family:'Sora', sans-serif; font-size:20px; font-weight:800; letter-spacing:.04em; color:var(--amber);
+    margin-top:4px;
+  }
+
+  .disclosure{
+    background: rgba(245,166,35,.08); border:1px solid rgba(245,166,35,.3); border-radius:14px;
+    padding:13px 14px; font-size:12px; color: var(--text); line-height:1.55; display:flex; gap:10px;
+  }
+  .disclosure svg{ flex-shrink:0; margin-top:1px; color:var(--amber); }
+  .disclosure b{ color:var(--amber); }
+
+  .timeline{ display:flex; flex-direction:column; }
+  .tl-item{ display:flex; gap:12px; }
+  .tl-dot-col{ display:flex; flex-direction:column; align-items:center; }
+  .tl-dot{ width:11px;height:11px;border-radius:50%; background:var(--line); flex-shrink:0; margin-top:3px; }
+  .tl-dot.done{ background:var(--good); }
+  .tl-dot.current{ background:var(--amber); box-shadow:0 0 0 4px rgba(245,166,35,.18); }
+  .tl-line{ width:2px; flex:1; background:var(--line); margin:2px 0; min-height:24px; }
+  .tl-line.done{ background:var(--good); }
+  .tl-body{ padding-bottom:18px; }
+  .tl-body h5{ margin:0 0 2px; font-size:13px; font-weight:700; }
+  .tl-body p{ margin:0; font-size:11px; color:var(--text-dim); line-height:1.5; }
+
+  /* Toggle switch */
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); gap:10px; }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle-row .label{ font-size:13px; font-weight:600; }
+  .toggle-row .sub{ font-size:11px; color:var(--text-dim); margin-top:1px; }
+  .switch{ position:relative; width:40px; height:22px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .slider{
+    position:absolute; inset:0; background:var(--line); border-radius:999px; cursor:pointer; transition:.2s;
+  }
+  .switch .slider::before{
+    content:''; position:absolute; width:16px; height:16px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:.2s;
+  }
+  .switch input:checked + .slider{ background: var(--amber); }
+  .switch input:checked + .slider::before{ transform: translateX(18px); }
+
+  /* Chat */
+  .chat-msg{ display:flex; gap:8px; margin-bottom:14px; align-items:flex-start; }
+  .chat-msg .av{
+    width:28px;height:28px;border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg, var(--amber), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; color:#1a1100;
+  }
+  .chat-msg .bubble{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:14px 14px 14px 4px;
+    padding:9px 12px; max-width:200px;
+  }
+  .chat-msg .author{ font-size:11px; font-weight:700; color:var(--amber); margin-bottom:2px; }
+  .chat-msg .text{ font-size:12.5px; line-height:1.4; }
+  .chat-msg .time{ font-size:10px; color:var(--text-dim); margin-top:4px; }
+  .chat-msg.me{ flex-direction:row-reverse; }
+  .chat-msg.me .bubble{ background:var(--red); border-color:var(--red-deep); border-radius:14px 14px 4px 14px; }
+  .chat-msg.me .time{ text-align:right; }
+
+  .chat-input-row{
+    display:flex; gap:8px; padding:10px 0 4px; align-items:center;
+  }
+  .chat-input-row input{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:999px;
+    padding:11px 16px; color:var(--text); font-size:12.5px; outline:none;
+  }
+  .chat-input-row input:focus{ border-color:var(--amber); }
+  .chat-send{
+    width:38px;height:38px;border-radius:50%; background:var(--red); border:none;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+
+  .quick-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .quick-tag{
+    font-size:11px; font-weight:700; padding:6px 11px; border-radius:999px; cursor:pointer;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text-dim);
+  }
+  .quick-tag.red{ border-color:rgba(196,32,47,.4); color:#ff8a93; }
+  .quick-tag.green{ border-color:rgba(63,174,107,.4); color:var(--good); }
+  .quick-tag.amber{ border-color:rgba(245,166,35,.4); color:var(--amber); }
+
+  .tip-card{ display:flex; gap:12px; align-items:center; padding:13px; }
+  .tip-card .ico{
+    width:38px;height:38px; border-radius:11px; background:var(--amber-soft); color:var(--amber);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .tip-card .ico svg{ width:19px; height:19px; }
+  .tip-card h5{ margin:0 0 2px; font-size:13px; font-weight:700; }
+  .tip-card p{ margin:0; font-size:11.5px; color:var(--text-dim); line-height:1.4; }
+
+  .stat-big{ font-family:'Sora',sans-serif; font-size:32px; font-weight:800; color:var(--amber); }
+  .bars-mini{ display:flex; align-items:flex-end; gap:6px; height:56px; margin-top:10px; }
+  .bars-mini .bar{ flex:1; background: linear-gradient(180deg, var(--amber), var(--red)); border-radius:4px 4px 0 0; }
+
+  .info-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .info-tile{ background:var(--panel-2); border:1px solid var(--line); border-radius:14px; padding:12px; }
+  .info-tile .k{ font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .info-tile .v{ font-size:14px; font-weight:700; }
+
+  .yesno-row{ display:flex; gap:10px; }
+  .yesno-row button{
+    flex:1; border-radius:14px; padding:12px; font-weight:700; font-size:12.5px; cursor:pointer; border:1px solid var(--line);
+  }
+  .yesno-row .yes{ background: var(--good-soft); border-color:rgba(63,174,107,.4); color:var(--good); }
+  .yesno-row .no{ background: var(--panel-2); color:var(--text-dim); }
+
+  @media (max-width: 480px){
+    body{ padding:24px 12px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="phone-shell">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="screen-statusbar">
+        <span>9:41</span>
+        <div class="icons">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h2v-2H2v2zm4-4h2v-6H6v6zm4 0h2v-10h-2v10zm4 0h2v-14h-2v14zm4 0h2v-18h-2v18z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9" width="20" height="2"/></svg>
+          <svg width="18" height="14" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="19" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="3" width="13" height="6" fill="currentColor"/></svg>
+        </div>
+      </div>
+
+      <div class="screen-body" id="screenBody">
+
+        <!-- 1. SPLASH -->
+        <div class="view active" data-view="splash">
+          <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:0 30px; text-align:center;">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--red); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 1px var(--red-deep), 0 8px 24px -8px var(--red);">
+              <svg viewBox="0 0 24 24" fill="none" style="width:34px;height:34px;"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#f5a623"/></svg>
+            </div>
+            <div style="font-family:'Sora',sans-serif; font-weight:800; font-size:24px; color:var(--amber);">RedeLuz</div>
+            <button class="btn-primary" onclick="goTo('login')">Começar</button>
+            <button class="btn-ghost" onclick="goTo('login')" style="border:none;">Já tem uma conta? <span style="color:var(--amber);">Entrar</span></button>
+          </div>
+        </div>
+
+        <!-- 2. LOGIN -->
+        <div class="view" data-view="login">
+          <div style="padding:24px 22px;">
+            <div class="back-row" style="padding:0 0 18px;">
+              <div class="back" onclick="goTo('splash')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#f5a623"/></svg>
+              <span style="font-family:'Sora',sans-serif; font-weight:800; font-size:20px;">RedeLuz</span>
+            </div>
+            <div class="h-sub" style="margin-bottom:22px;">Entre para ajudar sua comunidade.</div>
+
+            <div class="field">
+              <label>E-mail ou telefone</label>
+              <input type="text" placeholder="seu@email.com" id="loginEmail">
+            </div>
+            <div class="field">
+              <label>Senha</label>
+              <div class="input-wrap">
+                <input type="password" placeholder="••••••••" id="loginPass">
+                <span class="eye">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                </span>
+              </div>
+              <div style="text-align:right; margin-top:6px;"><a href="#" style="font-size:11px; color:var(--amber); text-decoration:none;">Esqueceu a senha?</a></div>
+            </div>
+
+            <button class="btn-primary" onclick="goTo('permission')">Entrar</button>
+
+            <div class="divider-row"><div class="line"></div><span>ou continue com</span><div class="line"></div></div>
+            <div class="social-row">
+              <div class="social-btn">G Google</div>
+              <div class="social-btn">⌘ Apple</div>
+            </div>
+
+            <div class="h-sub" style="text-align:center; margin-top:18px;">Não tem conta? <span style="color:var(--amber); font-weight:700;" onclick="goTo('signup')">Cadastre-se</span></div>
+          </div>
+        </div>
+
+        <!-- 3. CADASTRO -->
+        <div class="view" data-view="signup">
+          <div style="padding:24px 22px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('login')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="h-title" style="margin-bottom:2px;">Criar conta</div>
+            <div class="h-sub" style="margin-bottom:18px;">É rápido e fácil.</div>
+
+            <div class="field"><label>Nome completo</label><input type="text" placeholder="Seu nome"></div>
+            <div class="field"><label>E-mail</label><input type="text" placeholder="seu@email.com"></div>
+            <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div>
+            <div class="field"><label>Confirme a senha</label><input type="password" placeholder="••••••••"></div>
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="termsCheck">
+              <label for="termsCheck">Li e aceito os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a></label>
+            </div>
+
+            <button class="btn-primary" onclick="goTo('permission')">Criar conta</button>
+          </div>
+        </div>
+
+        <!-- 4. PERMISSÃO DE LOCALIZAÇÃO -->
+        <div class="view" data-view="permission">
+          <div style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:30px 26px; text-align:center; gap:18px;">
+            <div style="width:84px;height:84px;border-radius:50%; background:radial-gradient(circle, var(--red), var(--red-deep)); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 12px rgba(196,32,47,.1);">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            </div>
+            <div class="h-title">Ative sua localização</div>
+            <div class="h-sub" style="max-width:230px;">Precisamos da sua localização para mostrar as informações da sua região.</div>
+
+            <button class="btn-primary" onclick="confirmLocation()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/></svg>
+              Usar minha localização
+            </button>
+            <span style="font-size:12px; color:var(--amber); font-weight:700; cursor:pointer;" onclick="goTo('home')">Escolher manualmente</span>
+
+            <div class="h-sub" style="margin-top:10px;">Seus dados são seguros e não são compartilhados.</div>
+          </div>
+        </div>
+
+        <!-- 5. INÍCIO -->
+        <div class="view" data-view="home">
+          <div style="padding:18px 20px 0;">
+            <div class="topbar" style="padding:0 0 14px;">
+              <div class="loc"><span class="dot"></span> Jardim Camburi, Vitória - ES</div>
+              <div class="bell" onclick="goTo('notifs')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                <span class="dot-alert" id="bellDot" style="display:none;"></span>
+              </div>
+            </div>
+
+            <div class="card" id="homeStatusCard" style="margin-bottom:14px;">
+              <span class="status-pill gray" id="homeStatusPill">Tudo normal</span>
+              <div class="h-title" id="homeTitle" style="font-size:16px; margin-top:8px;">Nenhuma falta registrada</div>
+              <div class="h-sub" id="homeSub">Sua região está sem ocorrências no momento</div>
+              <div style="display:flex; justify-content:space-between; margin-top:12px;" id="homeTimesRow"></div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em;">Situação na sua região</span>
+              <div class="avatar-stack" id="homeAvatars"></div>
+            </div>
+
+            <div id="zoneList"></div>
+
+            <button class="btn-primary" style="margin-top:6px;" onclick="goTo('report')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff" stroke="none"/></svg>
+              Reportar falta de energia
+            </button>
+            <div style="height:14px;"></div>
+          </div>
+        </div>
+
+        <!-- 6. REPORTAR FALTA -->
+        <div class="view" data-view="report">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 6px;">
+              <div class="back" onclick="goTo('home')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="h-title" style="margin-bottom:2px;">Reportar falta de energia</div>
+            <div class="h-sub" style="margin-bottom:18px;">Informe os detalhes para ajudar sua comunidade.</div>
+
+            <div class="field">
+              <label>Há quanto tempo está sem energia?</label>
+              <div class="quick-tags">
+                <span class="quick-tag" data-dur="<1h" onclick="selectDuration(this)">&lt; 1h</span>
+                <span class="quick-tag" data-dur="1h-6h" onclick="selectDuration(this)">1h - 6h</span>
+                <span class="quick-tag" data-dur=">6h" onclick="selectDuration(this)">&gt; 6h</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>A energia caiu de repente?</label>
+              <div class="yesno-row">
+                <button class="yes" data-sudden="sim" onclick="selectSudden(this)">Sim</button>
+                <button class="no" data-sudden="nao" onclick="selectSudden(this)">Não</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Observações (opcional)</label>
+              <textarea placeholder="Conte algo relevante..." id="reportNotes"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="submitReport()" id="sendReportBtn">Enviar relato</button>
+          </div>
+        </div>
+
+        <!-- 7. APAGÃO CONFIRMADO -->
+        <div class="view" data-view="confirmed">
+          <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:0 28px; text-align:center;">
+            <div style="width:64px;height:64px;border-radius:50%; background:var(--good-soft); border:1px solid rgba(63,174,107,.4); display:flex; align-items:center; justify-content:center;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="h-title">Apagão confirmado!</div>
+            <div class="h-sub" id="confirmedSub">vizinhos reportaram falta de energia nesta área.</div>
+
+            <div class="card" style="width:100%; margin-top:8px;">
+              <div style="display:flex; justify-content:space-between;">
+                <div><div class="h-sub" style="margin-bottom:2px;">Início</div><div style="font-weight:700; font-size:13px;" id="confirmedStart">—</div></div>
+                <div><div class="h-sub" style="margin-bottom:2px;">Previsão de retorno</div><div style="font-weight:700; font-size:13px;" id="confirmedEta">—</div></div>
+              </div>
+              <div style="margin-top:12px;">
+                <div class="h-sub" style="margin-bottom:4px;">Confiabilidade dos relatos</div>
+                <div class="progress-track"><div class="progress-fill" id="confirmedBar" style="width:0%;"></div></div>
+              </div>
+            </div>
+
+            <button class="btn-amber" style="border:none; border-radius:16px; padding:14px; width:100%; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer;" onclick="goTo('protocol_track')">Acompanhar</button>
+            <button class="btn-ghost" onclick="markRestored()">Simular retorno de energia</button>
+            <span style="font-size:12px; color:var(--text-dim); cursor:pointer;" onclick="goTo('home')">Ver detalhes &rsaquo;</span>
+          </div>
+        </div>
+
+        <!-- 8. INFORMAÇÕES DA REDE -->
+        <div class="view" data-view="netinfo">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('home')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Informações da rede</span>
+            </div>
+
+            <div style="display:flex; justify-content:center; margin:14px 0 18px;">
+              <div style="width:72px;height:72px;border-radius:50%; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#f5a623"/></svg>
+              </div>
+            </div>
+
+            <div class="info-grid" style="margin-bottom:10px;">
+              <div class="info-tile"><div class="k">Tensão</div><div class="v">127V / 220V</div></div>
+              <div class="info-tile"><div class="k">Frequência</div><div class="v">60Hz</div></div>
+              <div class="info-tile"><div class="k">Distribuidora</div><div class="v">EDP Espírito Santo</div></div>
+              <div class="info-tile"><div class="k">Última atualização</div><div class="v" id="netUpdated">agora</div></div>
+            </div>
+
+            <button class="btn-outline" onclick="goTo('edp')">Canais da EDP</button>
+          </div>
+        </div>
+
+        <!-- 9. ESTATÍSTICAS -->
+        <div class="view" data-view="stats">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('profile')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Estatísticas e recorrência</span>
+            </div>
+
+            <div class="field"><select><option>Vitória - ES</option><option>Jardim Camburi</option></select></div>
+
+            <div class="card" style="margin-bottom:12px;">
+              <div class="h-sub">Média de apagões por mês</div>
+              <div class="stat-big" id="statAvg">3</div>
+              <div class="h-sub" id="statAvgLabel">ocorrências</div>
+              <div class="bars-mini" id="statBars"></div>
+            </div>
+
+            <div class="card">
+              <div class="h-sub">Últimos 30 dias</div>
+              <div class="stat-big" id="statCount">0</div>
+              <div class="h-sub" style="margin-bottom:10px;">ocorrências</div>
+              <div class="h-sub">Tempo médio de duração</div>
+              <div style="font-weight:700; font-size:14px; margin-top:2px;" id="statAvgDuration">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. DICAS ÚTEIS -->
+        <div class="view" data-view="tips">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('profile')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Dicas úteis</span>
+            </div>
+
+            <div class="card tip-card" style="margin-bottom:8px;">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="9" y1="22" x2="15" y2="22"/></svg></div>
+              <div><h5>Desligue aparelhos da tomada</h5><p>Evite danos quando a energia voltar.</p></div>
+            </div>
+            <div class="card tip-card" style="margin-bottom:8px;">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="7" width="10" height="14" rx="2"/><rect x="10" y="3" width="4" height="4"/></svg></div>
+              <div><h5>Economize bateria</h5><p>Ative o modo economia no seu celular.</p></div>
+            </div>
+            <div class="card tip-card" style="margin-bottom:8px;">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></div>
+              <div><h5>Tenha fontes de luz</h5><p>Mantenha lanternas ou luminárias recarregáveis.</p></div>
+            </div>
+            <div class="card tip-card">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 11H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+              <div><h5>Cuidado com alimentos</h5><p>Evite abrir a geladeira desnecessariamente.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11. NOTIFICAÇÕES -->
+        <div class="view" data-view="notifs">
+          <div style="padding:18px 20px;">
+            <div class="h-title" style="margin-bottom:2px;">Notificações</div>
+            <div class="h-sub" style="margin-bottom:14px;">Gerencie como deseja receber avisos sobre apagões.</div>
+
+            <div class="toggle-row">
+              <div><div class="label">Avisar sobre apagões na minha região</div></div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="label">Avisar sobre retorno de energia</div></div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="label">Alertas climáticos</div><div class="sub">Chuvas e ventos fortes</div></div>
+              <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="label">Resumo diário dos acontecimentos</div></div>
+              <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="label">Modo silencioso</div><div class="sub">22:00 – 07:00</div></div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+
+            <div style="margin-top:18px; font-size:11px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Histórico recente</div>
+            <div id="notifList"></div>
+          </div>
+        </div>
+
+        <!-- 12. CHAT DA COMUNIDADE -->
+        <div class="view" data-view="community">
+          <div style="height:100%; display:flex; flex-direction:column; padding:14px 18px 0;">
+            <div class="back-row" style="padding:0 0 6px;">
+              <div class="back" onclick="goTo('home')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Chat da comunidade</span>
+            </div>
+            <div class="h-sub" style="margin-bottom:10px;">Jardim Camburi</div>
+
+            <div class="quick-tags">
+              <span class="quick-tag red" onclick="sendQuickMsg('Ainda sem luz aqui.')">Ainda sem luz</span>
+              <span class="quick-tag green" onclick="sendQuickMsg('A energia voltou aqui!')">Voltou aqui</span>
+              <span class="quick-tag amber" onclick="sendQuickMsg('Oscilando bastante aqui na rua.')">Oscilando</span>
+            </div>
+
+            <div id="communityFeed" style="flex:1; overflow-y:auto; padding-top:4px;"></div>
+
+            <div class="chat-input-row">
+              <input type="text" id="communityInput" placeholder="Enviar atualização..." onkeydown="if(event.key==='Enter') sendCommunityMsg()">
+              <button class="chat-send" onclick="sendCommunityMsg()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 13. INTERAÇÃO COM A EDP (chat) -->
+        <div class="view" data-view="edp_chat">
+          <div style="height:100%; display:flex; flex-direction:column; padding:14px 18px 0;">
+            <div class="back-row" style="padding:0 0 6px;">
+              <div class="back" onclick="goTo('edp')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Interagir com a EDP</span>
+            </div>
+            <div class="h-sub" style="margin-bottom:6px;">Canal de acompanhamento do RedeLuz</div>
+
+            <div class="disclosure" style="margin-bottom:10px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div>Este chat é simulado pelo RedeLuz, app de terceiros. <b>Não é um canal oficial da EDP.</b></div>
+            </div>
+
+            <div id="edpChatFeed" style="flex:1; overflow-y:auto;"></div>
+
+            <div class="quick-tags">
+              <span class="quick-tag" onclick="askEdp('status')">Status do atendimento</span>
+              <span class="quick-tag" onclick="askEdp('eta')">Previsão de retorno</span>
+              <span class="quick-tag" onclick="askEdp('other')">Outros assuntos</span>
+            </div>
+
+            <div class="chat-input-row">
+              <input type="text" id="edpChatInput" placeholder="Digite sua mensagem..." onkeydown="if(event.key==='Enter') sendEdpMsg()">
+              <button class="chat-send" onclick="sendEdpMsg()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 14. PROTOCOLO ENVIADO -->
+        <div class="view" data-view="protocol_sent">
+          <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:0 28px; text-align:center;">
+            <div style="width:64px;height:64px;border-radius:16px; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            </div>
+            <div class="h-title">Protocolo registrado</div>
+            <div class="h-sub">Sua solicitação foi registrada no RedeLuz</div>
+
+            <div class="card protocol-box" style="width:100%;">
+              <div class="h-sub">Protocolo</div>
+              <div class="code" id="protocolCodeSent">—</div>
+            </div>
+
+            <div class="card" style="width:100%; text-align:left;">
+              <div class="h-sub">Status</div>
+              <span class="status-pill" style="margin-top:4px;">Em andamento</span>
+              <div class="h-sub" style="margin-top:10px;">Previsão de retorno</div>
+              <div style="font-weight:700; font-size:14px;" id="protocolEtaSent">—</div>
+            </div>
+
+            <button class="btn-primary" onclick="goTo('protocol_track')">Acompanhar protocolo</button>
+          </div>
+        </div>
+
+        <!-- 15. ACOMPANHAMENTO DO PROTOCOLO -->
+        <div class="view" data-view="protocol_track">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('home')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Acompanhamento do protocolo</span>
+            </div>
+
+            <div class="h-sub">Protocolo <strong style="color:var(--amber);" id="trackProtocolCode">—</strong></div>
+            <span class="status-pill" style="margin:8px 0 16px;" id="trackStatusPill">Em andamento</span>
+
+            <div class="timeline" id="trackTimeline"></div>
+
+            <button class="btn-ghost" id="trackRestoreBtn" onclick="markRestored()" style="margin-bottom:10px;">Simular retorno de energia</button>
+            <button class="btn-outline" onclick="goTo('edp_chat')">Falar com a EDP</button>
+          </div>
+        </div>
+
+        <!-- 16. ENERGIA RESTABELECIDA -->
+        <div class="view" data-view="restored">
+          <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:0 28px; text-align:center;">
+            <div style="width:68px;height:68px;border-radius:50%; background:var(--good-soft); border:1px solid rgba(63,174,107,.4); display:flex; align-items:center; justify-content:center;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="var(--good)"/></svg>
+            </div>
+            <div class="h-title">Energia restabelecida!</div>
+            <div class="h-sub">Obrigado por ajudar sua comunidade 💛</div>
+
+            <div class="card" style="width:100%;">
+              <div class="list-row"><span class="label">Início do apagão</span><span class="value" id="restStart">—</span></div>
+              <div class="list-row"><span class="label">Retorno da energia</span><span class="value" id="restEnd">—</span></div>
+              <div class="list-row"><span class="label">Duração total</span><span class="value" id="restDuration">—</span></div>
+            </div>
+
+            <div class="card" style="width:100%; text-align:left;">
+              <div class="h-sub" style="margin-bottom:10px;">A energia voltou totalmente na sua residência?</div>
+              <div class="yesno-row">
+                <button class="yes" onclick="goTo('home')">Sim, voltou</button>
+                <button class="no" onclick="goTo('report')">Ainda não</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 17. CONTATO EDP (resumo) -->
+        <div class="view" data-view="edp">
+          <div style="padding:18px 20px;">
+            <div class="back-row" style="padding:0 0 14px;">
+              <div class="back" onclick="goTo('home')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span class="back-title">Contato com a EDP</span>
+            </div>
+
+            <div class="disclosure" style="margin-bottom:14px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div><b>O RedeLuz é um app de terceiros.</b> Não há integração oficial com a EDP — o que você vê aqui é o status interno do app.</div>
+            </div>
+
+            <div class="card" id="edpStatusCard" style="margin-bottom:14px;">
+              <div style="font-size:11px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Status do seu relato</div>
+              <div id="edpStatusBody"></div>
+            </div>
+
+            <div class="card" id="edpProtocolCard" style="margin-bottom:14px; display:none;">
+              <div style="font-size:11px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Protocolo interno RedeLuz</div>
+              <div class="protocol-box">
+                <div style="font-size:11px; color:var(--text-dim);">Use este código para acompanhar seu caso</div>
+                <div class="code" id="protocolCode">—</div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:14px;">
+              <div style="font-size:11px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px;">Canais oficiais da EDP</div>
+              <div class="list-row"><span class="label">Central de atendimento</span><span class="value">0800 721 0707</span></div>
+              <div class="list-row"><span class="label">App oficial</span><span class="value">EDP ES</span></div>
+              <div class="list-row"><span class="label">Site</span><span class="value">edp.com.br</span></div>
+            </div>
+
+            <button class="btn-amber" style="border-radius:16px; padding:14px; font-family:'Sora',sans-serif; font-weight:700; font-size:13px; border:none; cursor:pointer; width:100%; margin-bottom:8px;" onclick="goTo('edp_chat')">Falar diretamente com a EDP</button>
+            <button class="btn-ghost" onclick="goTo('protocol_track')">Acompanhar protocolo</button>
+          </div>
+        </div>
+
+        <!-- 18. HISTÓRICO -->
+        <div class="view" data-view="history">
+          <div style="padding:18px 20px;">
+            <div class="h-title" style="margin-bottom:2px;">Histórico do bairro</div>
+            <div class="h-sub" style="margin-bottom:16px;">Eventos em Jardim Camburi</div>
+            <div id="historyList"></div>
+          </div>
+        </div>
+
+        <!-- 19. PERFIL -->
+        <div class="view" data-view="profile">
+          <div style="padding:18px 20px;">
+            <div class="h-title" style="margin-bottom:14px;">Perfil</div>
+
+            <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+              <div style="width:46px;height:46px;border-radius:50%; background:linear-gradient(135deg, var(--amber), var(--red)); display:flex; align-items:center; justify-content:center; font-weight:800; color:#1a1100;">JS</div>
+              <div>
+                <div style="font-weight:700; font-size:14px;">João Silva</div>
+                <div class="h-sub">Jardim Camburi, Vitória - ES</div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:8px;">
+              <div class="list-row" style="cursor:pointer;" onclick="goTo('stats')"><span class="label">Estatísticas e recorrência</span><span class="value">›</span></div>
+              <div class="list-row" style="cursor:pointer;" onclick="goTo('tips')"><span class="label">Dicas úteis</span><span class="value">›</span></div>
+              <div class="list-row" style="cursor:pointer;" onclick="goTo('notifs')"><span class="label">Notificações</span><span class="value">›</span></div>
+              <div class="list-row" style="cursor:pointer;" onclick="goTo('history')"><span class="label">Histórico do bairro</span><span class="value">›</span></div>
+              <div class="list-row" style="cursor:pointer;" onclick="goTo('edp')"><span class="label">Contato com a EDP</span><span class="value">›</span></div>
+            </div>
+
+            <button class="btn-ghost" onclick="goTo('splash'); resetApp();">Sair da conta</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB BAR -->
+      <div class="tabbar" id="tabbar">
+        <div class="tab-wrap">
+          <button class="tab" data-tab="home" onclick="goTo('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg>
+            Início
+          </button>
+        </div>
+        <div class="tab-wrap">
+          <button class="tab" data-tab="report" onclick="goTo('report')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            Reportar
+          </button>
+        </div>
+        <div class="tab-wrap">
+          <button class="tab" data-tab="community" onclick="goTo('community')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Chat
+          </button>
+        </div>
+        <div class="tab-wrap">
+          <button class="tab" data-tab="notifs" onclick="goTo('notifs')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            Avisos
+            <span class="badge" id="tabBadge" style="display:none;"></span>
+          </button>
+        </div>
+        <div class="tab-wrap">
+          <button class="tab" data-tab="profile" onclick="goTo('profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            Perfil
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------- ESTADO ---------------- */
+const REGION = "Jardim Camburi";
+const VALID_MIN = 5;
+const TABS = ['home','report','community','notifs','profile'];
+
+let state = {
+  reports: [],
+  userReported: false,
+  confirmed: false,
+  protocol: null,
+  startTime: null,
+  etaTime: null,
+  restoredTime: null,
+  notifs: [],
+  communityMsgs: [
+    { author:'Vizinho 1', text:'Alguém sabe se a luz já voltou na Av. Dante?', time:'há 6 min', me:false },
+    { author:'Vizinho 2', text:'Aqui na minha rua ainda sem luz.', time:'há 3 min', me:false }
+  ],
+  edpChatMsgs: [],
+  history: [
+    { date: "12 jun", duration: "0h 45min", families: 18 },
+    { date: "29 mai", duration: "2h 10min", families: 47 }
+  ],
+  zones: [
+    { name: REGION, status: 'down', meta: 'Sem energia' },
+    { name: 'Praia do Canto', status: 'warn', meta: 'Oscilando' },
+    { name: 'Mata da Praia', status: 'ok', meta: 'Normal' }
+  ],
+  reportDuration: null,
+  reportSudden: null
+};
+
+let validationTimer = null;
+
+const streetNames = [
+  "Rua Hugo Musso", "Av. Dante Michelini", "Rua Joaquim da Silva",
+  "Rua Eldes Scherrer", "Rua Vitor Hugo", "Av. Norte Sul", "Rua Almirante Barroso"
+];
+
+/* ---------------- NAVEGAÇÃO ---------------- */
+function goTo(viewName){
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === viewName));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === viewName));
+
+  const tabbar = document.getElementById('tabbar');
+  tabbar.style.display = TABS.includes(viewName) ? 'flex' : (viewName === 'community' || viewName === 'notifs' ? 'flex' : 'none');
+  // tabbar visível nas telas principais do app (depois do onboarding)
+  const onboarding = ['splash','login','signup','permission'];
+  tabbar.style.display = onboarding.includes(viewName) ? 'none' : 'flex';
+
+  if(viewName === 'notifs'){
+    document.getElementById('bellDot').style.display = 'none';
+    document.getElementById('tabBadge').style.display = 'none';
+  }
+  if(viewName === 'home') renderHome();
+  if(viewName === 'edp') renderEdp();
+  if(viewName === 'history') renderHistory();
+  if(viewName === 'stats') renderStats();
+  if(viewName === 'community') renderCommunity();
+  if(viewName === 'edp_chat') renderEdpChat();
+  if(viewName === 'protocol_track') renderTrack();
+}
+
+function confirmLocation(){
+  goTo('home');
+}
+
+/* ---------------- HOME ---------------- */
+function renderHome(){
+  const pill = document.getElementById('homeStatusPill');
+  const title = document.getElementById('homeTitle');
+  const sub = document.getElementById('homeSub');
+  const avatars = document.getElementById('homeAvatars');
+  const timesRow = document.getElementById('homeTimesRow');
+  const zoneList = document.getElementById('zoneList');
+
+  if(state.restoredTime){
+    pill.className = 'status-pill green';
+    pill.innerHTML = '✅ Energia restabelecida';
+    title.textContent = 'Tudo normalizado';
+    sub.textContent = `Energia voltou às ${state.restoredTime} em ${REGION}.`;
+    timesRow.innerHTML = `
+      <div><div class="h-sub">Início</div><div style="font-weight:700; font-size:13px;">${state.startTime}</div></div>
+      <div><div class="h-sub">Retorno</div><div style="font-weight:700; font-size:13px;">${state.restoredTime}</div></div>
+    `;
+  } else if(state.confirmed){
+    pill.className = 'status-pill red';
+    pill.innerHTML = '⚠️ Falta de energia';
+    title.textContent = 'Apagão confirmado';
+    sub.textContent = `${state.reports.length} pessoas reportaram falta de energia nesta área.`;
+    timesRow.innerHTML = `
+      <div><div class="h-sub">Início</div><div style="font-weight:700; font-size:13px;">${state.startTime}</div></div>
+      <div><div class="h-sub">Previsão de retorno</div><div style="font-weight:700; font-size:13px;">${state.etaTime}</div></div>
+    `;
+  } else if(state.userReported){
+    pill.className = 'status-pill';
+    pill.innerHTML = '⏳ Validando relato';
+    title.textContent = 'Confirmando com vizinhos';
+    sub.textContent = `${state.reports.length} / ${VALID_MIN} relatos coletados`;
+    timesRow.innerHTML = '';
+  } else {
+    pill.className = 'status-pill gray';
+    pill.innerHTML = 'Tudo normal';
+    title.textContent = 'Nenhuma falta registrada';
+    sub.textContent = 'Sua região está sem ocorrências no momento';
+    timesRow.innerHTML = '';
+  }
+
+  avatars.innerHTML = '';
+  const shown = Math.min(state.reports.length, 3);
+  for(let i = 0; i < shown; i++){
+    const s = document.createElement('span');
+    s.textContent = 'V' + (i+1);
+    avatars.appendChild(s);
+  }
+  if(state.reports.length > 3){
+    const s = document.createElement('span');
+    s.textContent = '+' + (state.reports.length - 3);
+    avatars.appendChild(s);
+  }
+
+  // zonas (substitui o mapa: lista viva de bairros com status)
+  zoneList.innerHTML = '';
+  state.zones.forEach(z => {
+    const row = document.createElement('div');
+    row.className = 'zone-row';
+    row.style.cursor = 'pointer';
+    row.onclick = () => goTo('netinfo');
+    const statusLabel = z.status === 'down' ? 'Sem energia' : z.status === 'warn' ? 'Oscilando' : 'Normal';
+    row.innerHTML = `
+      <div class="left">
+        <span class="zone-dot ${z.status}"></span>
+        <div>
+          <div class="zone-name">${z.name}</div>
+          <div class="zone-meta">${z.meta}</div>
+        </div>
+      </div>
+      <span class="zone-status ${z.status}">${statusLabel}</span>
+    `;
+    zoneList.appendChild(row);
+  });
+}
+
+/* ---------------- REPORTAR ---------------- */
+function selectDuration(el){
+  document.querySelectorAll('[data-dur]').forEach(e => e.style.outline = 'none');
+  el.style.outline = '2px solid var(--amber)';
+  state.reportDuration = el.dataset.dur;
+}
+function selectSudden(el){
+  document.querySelectorAll('[data-sudden]').forEach(e => e.style.outline = 'none');
+  el.style.outline = '2px solid var(--amber)';
+  state.reportSudden = el.dataset.sudden;
+}
+
+function submitReport(){
+  if(!state.userReported){
+    state.userReported = true;
+    state.startTime = nowLabel();
+    state.etaTime = etaLabel(2);
+    state.reports.push({ street: "Você", time: "agora", isUser: true });
+    state.zones[0].status = 'down';
+    state.zones[0].meta = 'Sem energia';
+  }
+  goTo('home');
+  startValidation();
+}
+
+function startValidation(){
+  if(validationTimer) clearInterval(validationTimer);
+  validationTimer = setInterval(() => {
+    if(state.reports.length >= VALID_MIN){
+      clearInterval(validationTimer);
+      confirmOutage();
+      return;
+    }
+    const street = streetNames[Math.floor(Math.random() * streetNames.length)];
+    const mins = Math.floor(Math.random() * 3) + 1;
+    state.reports.push({ street, time: `há ${mins} min`, isUser: false });
+    if(document.querySelector('[data-view="home"]').classList.contains('active')) renderHome();
+  }, 1200);
+}
+
+function confirmOutage(){
+  state.confirmed = true;
+  state.protocol = generateProtocol();
+
+  document.getElementById('confirmedSub').textContent = `${state.reports.length} pessoas reportaram falta de energia nesta área.`;
+  document.getElementById('confirmedStart').textContent = state.startTime;
+  document.getElementById('confirmedEta').textContent = state.etaTime;
+  document.getElementById('confirmedBar').style.width = '92%';
+
+  pushNotif({ title: "Apagão confirmado", body: `Confirmado em ${REGION}. Protocolo ${state.protocol}.`, tone: 'red' });
+  document.getElementById('bellDot').style.display = 'block';
+  document.getElementById('tabBadge').style.display = 'block';
+
+  goTo('confirmed');
+  renderHome();
+}
+
+function markRestored(){
+  state.restoredTime = nowLabel();
+  state.zones[0].status = 'ok';
+  state.zones[0].meta = 'Normal';
+
+  document.getElementById('restStart').textContent = state.startTime || '—';
+  document.getElementById('restEnd').textContent = state.restoredTime;
+  document.getElementById('restDuration').textContent = durationLabel(state.startTime, state.restoredTime);
+
+  pushNotif({ title: "Energia restabelecida", body: `A energia voltou em ${REGION}.`, tone: 'green' });
+  document.getElementById('bellDot').style.display = 'block';
+  document.getElementById('tabBadge').style.display = 'block';
+
+  goTo('restored');
+}
+
+function durationLabel(start, end){
+  if(!start || !end) return '—';
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if(mins < 0) mins += 24 * 60;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}min`;
+}
+
+function generateProtocol(){
+  const year = new Date().getFullYear();
+  const rand = Math.floor(100000 + Math.random() * 900000);
+  return `RL-${year}-${rand}`;
+}
+
+function nowLabel(){
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+function etaLabel(hoursAhead){
+  const d = new Date();
+  d.setHours(d.getHours() + hoursAhead);
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+/* ---------------- NOTIFICAÇÕES ---------------- */
+function pushNotif(n){
+  state.notifs.unshift({ ...n, time: 'agora' });
+  renderNotifList();
+}
+function renderNotifList(){
+  const list = document.getElementById('notifList');
+  if(!list) return;
+  if(state.notifs.length === 0){
+    list.innerHTML = `<div class="h-sub">Nenhuma notificação ainda.</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  state.notifs.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.marginBottom = '8px';
+    card.style.borderColor = n.tone === 'red' ? 'rgba(196,32,47,.4)' : 'var(--line)';
+    card.innerHTML = `<div style="font-weight:700; font-size:12px;">${n.title} · ${n.time}</div><div class="h-sub" style="margin-top:3px;">${n.body}</div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ---------------- CHAT DA COMUNIDADE ---------------- */
+function renderCommunity(){
+  const feed = document.getElementById('communityFeed');
+  feed.innerHTML = '';
+  state.communityMsgs.forEach(m => feed.appendChild(buildChatBubble(m)));
+  feed.scrollTop = feed.scrollHeight;
+}
+function buildChatBubble(m){
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-msg' + (m.me ? ' me' : '');
+  wrap.innerHTML = `
+    ${!m.me ? `<div class="av">${m.author.slice(0,2).toUpperCase()}</div>` : ''}
+    <div>
+      ${!m.me ? `<div class="author">${m.author}</div>` : ''}
+      <div class="bubble"><div class="text">${m.text}</div></div>
+      <div class="time">${m.time}</div>
+    </div>
+  `;
+  return wrap;
+}
+function sendCommunityMsg(){
+  const input = document.getElementById('communityInput');
+  const text = input.value.trim();
+  if(!text) return;
+  state.communityMsgs.push({ author:'Você', text, time:'agora', me:true });
+  input.value = '';
+  renderCommunity();
+}
+function sendQuickMsg(text){
+  state.communityMsgs.push({ author:'Você', text, time:'agora', me:true });
+  renderCommunity();
+}
+
+/* ---------------- CHAT COM A EDP ---------------- */
+function renderEdpChat(){
+  const feed = document.getElementById('edpChatFeed');
+  if(state.edpChatMsgs.length === 0){
+    state.edpChatMsgs.push({ author:'RedeLuz', text:`Olá! Posso te ajudar a acompanhar o status de atendimento na sua região (${REGION}).`, time: nowLabel(), me:false });
+  }
+  feed.innerHTML = '';
+  state.edpChatMsgs.forEach(m => feed.appendChild(buildChatBubble(m)));
+  feed.scrollTop = feed.scrollHeight;
+}
+function askEdp(type){
+  let reply = '';
+  if(type === 'status'){
+    reply = state.confirmed
+      ? `Seu relato foi consolidado com protocolo ${state.protocol}. Lembrando: este status é interno do RedeLuz, sem confirmação oficial da EDP.`
+      : `Ainda não há relato confirmado na sua região. Reporte uma falta de energia para começarmos o acompanhamento.`;
+  } else if(type === 'eta'){
+    reply = state.confirmed
+      ? `Previsão estimada de retorno: ${state.etaTime}, baseada em ocorrências anteriores nesta região.`
+      : `Sem ocorrência ativa para estimar previsão de retorno agora.`;
+  } else {
+    reply = `Para outros assuntos, use os canais oficiais da EDP: 0800 721 0707 ou edp.com.br.`;
+  }
+  state.edpChatMsgs.push({ author:'RedeLuz', text: reply, time: nowLabel(), me:false });
+  renderEdpChat();
+}
+function sendEdpMsg(){
+  const input = document.getElementById('edpChatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  state.edpChatMsgs.push({ author:'Você', text, time: nowLabel(), me:true });
+  input.value = '';
+  renderEdpChat();
+  setTimeout(() => {
+    state.edpChatMsgs.push({ author:'RedeLuz', text:'Recebido. Posso te ajudar com status do atendimento, previsão de retorno ou direcionar para os canais oficiais da EDP.', time: nowLabel(), me:false });
+    renderEdpChat();
+  }, 600);
+}
+
+/* ---------------- CONTATO EDP (resumo) ---------------- */
+function renderEdp(){
+  const body = document.getElementById('edpStatusBody');
+  const protocolCard = document.getElementById('edpProtocolCard');
+
+  if(!state.userReported){
+    body.innerHTML = `<span class="status-pill gray">Sem relato ativo</span><div class="h-sub" style="margin-top:10px;">Você ainda não reportou nenhuma falta de energia.</div>`;
+    protocolCard.style.display = 'none';
+    return;
+  }
+  if(!state.confirmed){
+    body.innerHTML = `
+      <span class="status-pill">Em validação</span>
+      <div class="h-sub" style="margin-top:10px;">Seu relato está sendo confirmado pela comunidade (${state.reports.length} / ${VALID_MIN}).</div>
+      <div class="h-sub" style="margin-top:6px;"><b style="color:var(--amber);">Ainda não enviado à EDP.</b></div>
+    `;
+    protocolCard.style.display = 'none';
+    return;
+  }
+  body.innerHTML = `
+    <span class="status-pill green">Consolidado no RedeLuz</span>
+    <div class="h-sub" style="margin-top:10px;">Confirmado com outros ${state.reports.length - 1} vizinhos.</div>
+    <div class="h-sub" style="margin-top:6px;"><b style="color:var(--amber);">Não enviado diretamente à EDP</b> — sem integração oficial com a distribuidora.</div>
+  `;
+  protocolCard.style.display = 'block';
+  document.getElementById('protocolCode').textContent = state.protocol;
+  document.getElementById('protocolCodeSent').textContent = state.protocol;
+  document.getElementById('protocolEtaSent').textContent = state.etaTime || '—';
+}
+
+/* ---------------- ACOMPANHAMENTO DE PROTOCOLO ---------------- */
+function renderTrack(){
+  document.getElementById('trackProtocolCode').textContent = state.protocol || '—';
+  const steps = [
+    { label: 'Relato registrado', done: state.userReported, sub: state.startTime || '' },
+    { label: 'Validado pela comunidade', done: state.confirmed, sub: state.confirmed ? `${state.reports.length} relatos confirmados` : 'Aguardando relatos' },
+    { label: 'Status interno consolidado', done: state.confirmed, sub: state.confirmed ? `Protocolo ${state.protocol}` : '—' },
+    { label: 'Energia restabelecida', done: !!state.restoredTime, sub: state.restoredTime || '—' }
+  ];
+  const tl = document.getElementById('trackTimeline');
+  tl.innerHTML = '';
+  steps.forEach((s, i) => {
+    const isCurrent = !s.done && (i === 0 || steps[i-1].done);
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+    item.innerHTML = `
+      <div class="tl-dot-col">
+        <div class="tl-dot ${s.done ? 'done' : (isCurrent ? 'current' : '')}"></div>
+        ${i < steps.length - 1 ? `<div class="tl-line ${s.done ? 'done' : ''}"></div>` : ''}
+      </div>
+      <div class="tl-body">
+        <h5>${s.label}</h5>
+        <p>${s.sub}</p>
+      </div>
+    `;
+    tl.appendChild(item);
+  });
+  document.getElementById('trackStatusPill').textContent = state.restoredTime ? 'Concluído' : (state.confirmed ? 'Em andamento' : 'Aguardando validação');
+  document.getElementById('trackStatusPill').className = 'status-pill ' + (state.restoredTime ? 'green' : (state.confirmed ? '' : 'gray'));
+  document.getElementById('trackRestoreBtn').style.display = (state.confirmed && !state.restoredTime) ? 'block' : 'none';
+}
+
+/* ---------------- HISTÓRICO ---------------- */
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  let items = [...state.history];
+  if(state.confirmed){
+    items = [{ date: 'Hoje', duration: state.restoredTime ? 'Concluído' : 'Em andamento', families: state.reports.length, current: !state.restoredTime, protocol: state.protocol }, ...items];
+  }
+  list.innerHTML = '';
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.marginBottom = '8px';
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:700; font-size:13px;">${item.date}</div>
+          <div class="h-sub">${item.families} famílias afetadas</div>
+        </div>
+        <span class="status-pill ${item.current ? 'red' : 'gray'}">${item.duration}</span>
+      </div>
+      ${item.protocol ? `<div class="h-sub" style="margin-top:8px;">Protocolo: <strong style="color:var(--amber);">${item.protocol}</strong></div>` : ''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+/* ---------------- ESTATÍSTICAS ---------------- */
+function renderStats(){
+  document.getElementById('statCount').textContent = state.history.length + (state.confirmed ? 1 : 0);
+  document.getElementById('statAvgDuration').textContent = '1h 30min';
+  const bars = document.getElementById('statBars');
+  bars.innerHTML = '';
+  [40, 65, 30, 80, 50, 70].forEach(h => {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = h + '%';
+    bars.appendChild(b);
+  });
+}
+
+/* ---------------- RESET ---------------- */
+function resetApp(){
+  if(validationTimer) clearInterval(validationTimer);
+  state.reports = [];
+  state.userReported = false;
+  state.confirmed = false;
+  state.protocol = null;
+  state.startTime = null;
+  state.etaTime = null;
+  state.restoredTime = null;
+  state.notifs = [];
+  state.zones = [
+    { name: REGION, status: 'ok', meta: 'Normal' },
+    { name: 'Praia do Canto', status: 'ok', meta: 'Normal' },
+    { name: 'Mata da Praia', status: 'ok', meta: 'Normal' }
+  ];
+  document.getElementById('bellDot').style.display = 'none';
+  document.getElementById('tabBadge').style.display = 'none';
+  renderNotifList();
+}
+
+/* ---------------- INIT ---------------- */
+renderNotifList();
+</script>
+</body>
+</html>
